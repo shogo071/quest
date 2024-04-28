@@ -15,15 +15,16 @@ while true; do
     if [ -f "step3/password_step3.txt.gpg" ]; then
       encrypted_file="step3/password_step3.txt.gpg"
       # ファイルを復号化する
-      gpg -d -q --decrypt "$encrypted_file" >output.txt
-      cat output.txt >step3/password_step3.txt
-      rm output.txt
+      gpg -d -q --decrypt "$encrypted_file" >step3/password_step3.txt
     fi
 
     echo 'サービス名を入力してください：'
     read -r service
 
     #同じサービスであった場合、再入力してもらう
+    if ! [ -f "step3/password_step3.txt" ]; then
+      touch step3/password_step3.txt
+    fi
     while grep -q "$service" step3/password_step3.txt; do
       echo "既に登録されたサービスです。再入力してください"
       read -r service
@@ -43,7 +44,9 @@ $password" >>step3/password_step3.txt
     #ファイルを暗号化する
     encrypt_file="step3/password_step3.txt"
     gnugp_key="donf8323@gmail.com"
+    #--yesオプションで強制的に上書きする
     gpg --yes --recipient "$gnugp_key" --encrypt "$encrypt_file"
+    #パスワードが見えないようにするため暗号化したファイル以外は削除しておく
     rm step3/password_step3.txt
 
   #登録されたサービスの表示の処理
@@ -53,10 +56,8 @@ $password" >>step3/password_step3.txt
 
     #暗号化されたファイルを復号化する
     encrypted_file="step3/password_step3.txt.gpg"
-    # ファイルを復号化する
-    gpg -d -q --decrypt "$encrypted_file" >output.txt
-    cat output.txt >step3/password_step3.txt
-    rm output.txt
+    # ファイルを復号化する。普通に復号化するとファイルの内容がターミナルに表示されてしまうのでオプション-d,-qを使用しその内容をリダイレトしている。
+    gpg -d -q --decrypt "$encrypted_file" >step3/password_step3.txt
 
     #-qオプションで条件分岐分は表示されない
     if grep -q "$service" step3/password_step3.txt; then
@@ -65,6 +66,8 @@ $password" >>step3/password_step3.txt
       echo "サービス名:$service"
       echo "ユーザー名：$user"
       echo "パスワード：$pass"
+
+      #パスワードが見えないようにするため暗号化したファイル以外は削除しておく
       rm step3/password_step3.txt
 
     else
